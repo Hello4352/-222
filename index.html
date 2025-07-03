@@ -56,9 +56,6 @@
 </head>
 <body>
   <h2 style="text-align:center;">자리 뽑기</h2>
-  <p style="text-align:center; color: red; font-weight: bold;">
-    ※ X 표시된 칸에는 숫자가 절대 배정되지 않습니다.
-  </p>
   <div class="board">(칠판)</div>
 
   <div class="inputs">
@@ -125,7 +122,7 @@
       }
 
       const totalNumbers = end - start + 1;
-      const numbers = [];
+      let numbers = [];
       for (let i = start; i <= end; i++) {
         if (!exclude.includes(i)) numbers.push(i);
       }
@@ -139,6 +136,10 @@
         perSection = Math.ceil(totalNumbers / 3);
         rows = Math.ceil(perSection / columns);
         totalSeats = 3 * rows * columns;
+      } else {
+        totalSeats = 18;
+        rows = 3;
+        perSection = 6;
       }
 
       const seatLayout = document.getElementById("seatLayout");
@@ -147,12 +148,39 @@
       unplacedBox.style.display = "none";
       unplacedBox.innerHTML = "";
 
-      // 초기화
       if (seatStates.length !== totalSeats) {
         seatStates = new Array(totalSeats).fill(null);
       }
 
-      // 숫자를 채워야 하는 인덱스만 추출 (X가 아닌 칸)
+      let autoXIndexes = [];
+      if (totalNumbers <= 18) {
+        const manualX = seatStates.map((v, i) => v === "X" ? i : -1).filter(i => i !== -1);
+        let numAutoX = 18 - numbers.length - manualX.length;
+        const available = [];
+        for (let i = 0; i < 18; i++) {
+          if (seatStates[i] !== "X") available.push(i);
+        }
+        shuffle(available);
+        autoXIndexes = available.slice(0, numAutoX);
+        for (let i = 0; i < autoXIndexes.length; i++) {
+          seatStates[autoXIndexes[i]] = "X";
+        }
+      }
+
+      // 🔽 추가된 부분 시작 (추가 X 처리)
+      let extraAutoX = [];
+      const currentAvailable = seatStates.reduce((count, val) => count + (val !== "X" ? 1 : 0), 0);
+      const diff = currentAvailable - numbers.length;
+      if (diff > 0) {
+        const candidates = seatStates.map((v, i) => v !== "X" ? i : -1).filter(i => i !== -1);
+        shuffle(candidates);
+        extraAutoX = candidates.slice(0, diff);
+        for (const idx of extraAutoX) {
+          seatStates[idx] = "X";
+        }
+      }
+      // 🔼 추가된 부분 끝
+
       const availableIndexes = [];
       for (let i = 0; i < totalSeats; i++) {
         if (seatStates[i] !== "X") {
@@ -160,13 +188,25 @@
         }
       }
 
-      // 숫자를 셔플하고 할당
       shuffle(numbers);
       seatValues = new Array(totalSeats).fill("");
-
       for (let i = 0; i < numbers.length && i < availableIndexes.length; i++) {
         seatValues[availableIndexes[i]] = numbers[i];
       }
+
+      if (autoXIndexes.length > 0) {
+        for (const idx of autoXIndexes) {
+          seatStates[idx] = null;
+        }
+      }
+
+      // 🔽 추가된 부분: extra X도 제거
+      if (extraAutoX.length > 0) {
+        for (const idx of extraAutoX) {
+          seatStates[idx] = null;
+        }
+      }
+      // 🔼 끝
 
       for (let s = 0; s < 3; s++) {
         const section = document.createElement("div");
@@ -185,7 +225,6 @@
         seatLayout.appendChild(section);
       }
 
-      // 자리 배치되지 못한 번호 계산
       const placedNumbers = seatValues.filter(v => typeof v === "number");
       const missing = numbers.filter(n => !placedNumbers.includes(n));
       if (missing.length > 0) {
