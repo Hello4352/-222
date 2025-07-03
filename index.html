@@ -57,7 +57,7 @@
 <body>
   <h2 style="text-align:center;">자리 뽑기</h2>
   <p style="text-align:center; color: red; font-weight: bold;">
-    ※ X 표시된 칸에는 숫자가 들어갈 수 없습니다.
+    ※ X 표시된 칸에는 숫자가 절대 배정되지 않습니다.
   </p>
   <div class="board">(칠판)</div>
 
@@ -73,13 +73,13 @@
 
   <script>
     function shuffle(array) {
-      for(let i = array.length -1; i > 0; i--) {
+      for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [array[i], array[j]] = [array[j], array[i]];
       }
     }
 
-    let seatStates = []; // 클릭 상태
+    let seatStates = []; // "X"로 표시된 칸 정보
     let seatValues = [];
 
     function createCell(index, value) {
@@ -141,39 +141,44 @@
         totalSeats = 3 * rows * columns;
       }
 
-      const generated = [...numbers];
-
-      // 빈칸 후보 개수 (자리 수 - 실제 숫자 수)
-      const blankCount = totalSeats - generated.length;
-
-      for (let i = 0; i < blankCount; i++) {
-        generated.push("X"); // 나중에 빈칸으로 바꿈
-      }
-
-      shuffle(generated);
-      seatValues = [...generated];
-      seatStates.length = totalSeats;
-
       const seatLayout = document.getElementById("seatLayout");
       const unplacedBox = document.getElementById("unplaced");
       seatLayout.innerHTML = "";
       unplacedBox.style.display = "none";
       unplacedBox.innerHTML = "";
 
-      for(let s = 0; s < 3; s++) {
+      // 초기화
+      if (seatStates.length !== totalSeats) {
+        seatStates = new Array(totalSeats).fill(null);
+      }
+
+      // 숫자를 채워야 하는 인덱스만 추출 (X가 아닌 칸)
+      const availableIndexes = [];
+      for (let i = 0; i < totalSeats; i++) {
+        if (seatStates[i] !== "X") {
+          availableIndexes.push(i);
+        }
+      }
+
+      // 숫자를 셔플하고 할당
+      shuffle(numbers);
+      seatValues = new Array(totalSeats).fill("");
+
+      for (let i = 0; i < numbers.length && i < availableIndexes.length; i++) {
+        seatValues[availableIndexes[i]] = numbers[i];
+      }
+
+      for (let s = 0; s < 3; s++) {
         const section = document.createElement("div");
         section.className = "section";
         section.style.gridTemplateColumns = `repeat(${columns}, 60px)`;
         section.style.gridTemplateRows = `repeat(${rows}, 60px)`;
 
-        for(let row = 0; row < rows; row++) {
-          for(let col = 0; col < columns; col++) {
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < columns; col++) {
             const localIndex = row * columns + col;
             const globalIndex = s * columns * rows + localIndex;
-            let val = seatValues[globalIndex];
-
-            if (val === "X") val = "";
-
+            const val = seatStates[globalIndex] === "X" ? "" : seatValues[globalIndex];
             section.appendChild(createCell(globalIndex, val));
           }
         }
