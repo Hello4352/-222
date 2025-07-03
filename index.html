@@ -78,7 +78,7 @@
       }
     }
 
-    const seatStates = [];
+    let seatStates = [];  // 유지되는 상태 저장용
 
     function createCell(index, value) {
       const div = document.createElement("div");
@@ -145,10 +145,16 @@
         seatValues = allNumbers.map(v => exclude.includes(v) ? "" : v);
       }
 
-      seatStates.length = seatValues.length;
-      seatStates.fill(null);
+      const totalSeats = seatValues.length;
 
-      let columns = 2, rows = 3, sections = 3;
+      // 기존 상태를 복원하거나 새로 생성
+      const oldStates = seatStates.slice(); // 이전 상태 복사
+      seatStates = Array(totalSeats).fill(null);
+      for (let i = 0; i < totalSeats; i++) {
+        seatStates[i] = oldStates[i] === "X" ? "X" : null;
+      }
+
+      let columns = 2, rows = 3;
       if (end - start + 1 > 18) {
         const perSection = Math.ceil(seatValues.length / 3);
         rows = Math.ceil(perSection / 2);
