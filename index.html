@@ -1,163 +1,346 @@
-<!DOCTYPE html><html lang="ko">
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>자리 배치</title>
-  <style>
-    body { font-family: sans-serif; }
-    .layout {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      margin-top: 20px;
-      flex-wrap: wrap;
-    }
-    .section {
-      display: grid;
-      gap: 10px;
-    }
-    .cell {
-      background: #f0f0f0;
-      border: 1px solid #aaa;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      cursor: pointer;
-      width: 60px;
-      height: 60px;
-    }
-    .clicked {
-      background: #ffcccc;
-    }
-    .board {
-      width: 400px;
-      margin: 0 auto;
-      height: 40px;
-      background: #d0d0d0;
-      text-align: center;
-      line-height: 40px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .inputs {
-      text-align: center;
-      margin-bottom: 10px;
-    }
-    .unplaced-box {
-      max-width: 600px;
-      margin: 20px auto;
-      background: #ffeeee;
-      border: 1px dashed #ff9999;
-      padding: 10px;
-      font-size: 16px;
-      text-align: center;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>자리 뽑기 사이트</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 960px;
+            margin: 30px auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.09);
+            padding: 32px 40px 48px 40px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 38px;
+            letter-spacing: 2px;
+        }
+        .inputs {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .inputs label {
+            font-size: 18px;
+            margin-right: 8px;
+        }
+        .inputs input {
+            width: 80px;
+            padding: 4px;
+            font-size: 16px;
+        }
+        .inputs input[type="text"] {
+            width: 180px;
+        }
+        .inputs button {
+            padding: 6px 18px;
+            font-size: 16px;
+            background: #5ABEFF;
+            border: none;
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .inputs button:hover {
+            background: #4899c8;
+        }
+        .seating-area {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 28px;
+            gap: 24px;
+        }
+        .division {
+            flex: 1;
+            background: #e9f7ff;
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .division-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+        .seats-grid {
+            display: grid;
+            gap: 8px;
+        }
+        .seat {
+            width: 48px;
+            height: 48px;
+            background: #fff;
+            border: 2px solid #5ABEFF;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border 0.18s;
+            user-select: none;
+            position: relative;
+        }
+        .seat.x-seat {
+            background: #ffdde0;
+            color: #ff3b3b;
+            border: 2px solid #ff3b3b;
+            cursor: pointer;
+        }
+        .seat.empty {
+            background: #ddd;
+            color: #bbb;
+            border: 2px dashed #aaa;
+            cursor: default;
+        }
+        @media (max-width: 1100px) {
+            .container { width: 99vw; padding: 10px; }
+            .seating-area { flex-direction: column; align-items: center; gap: 20px; }
+            .division { width: 95vw; }
+        }
+    </style>
 </head>
 <body>
-  <h2 style="text-align:center;">자리 배치</h2>
-  <div class="board">(칠판)</div>  <div class="inputs">
-    시작 번호: <input type="number" id="startNum" value="1" />
-    끝 번호: <input type="number" id="endNum" value="28" />
-    제외할 번호(쉼표로): <input type="text" id="excludeNums" placeholder="예: 3,5,12" />
-    총 칸 수: <input type="number" id="totalCells" value="30" />
-    <button onclick="generateSeats()">자리 생성</button>
-  </div>  <div class="layout" id="seatLayout"></div>
-  <div id="unplaced" class="unplaced-box" style="display:none;"></div>  <script>
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-    }
+    <div class="container">
+        <h1>칠판</h1>
+        <div class="inputs">
+            <label>시작번호 <input type="number" id="startNum" min="1" value="1"></label>
+            <label>끝번호 <input type="number" id="endNum" min="1" value="24"></label>
+            <label>제외할 번호 (쉼표로 구분) <input type="text" id="excludeNums" placeholder="예: 3,6,9"></label>
+            <button id="generateBtn">자리 뽑기!</button>
+        </div>
+        <div id="seatingArea" class="seating-area"></div>
+    </div>
+    <script>
+        // 좌석 상태
+        let seatState = [[], [], []]; // 내부 구조: [{type: 'number'|'x'|'empty', value: number|null, xLocked: bool}]
+        let startNum = 1, endNum = 24, excludeNumbers = [];
 
-    let seatStates = [];
-
-    function createCell(index, value) {
-      const div = document.createElement("div");
-      div.className = "cell";
-      div.textContent = value;
-      div.dataset.seatIndex = index;
-
-      if (seatStates[index] === "X") {
-        div.textContent = "";
-        div.classList.add("clicked");
-      }
-
-      div.addEventListener("click", () => {
-        const idx = parseInt(div.dataset.seatIndex);
-        if (seatStates[idx] === "X") {
-          seatStates[idx] = null;
-          div.textContent = div.dataset.originalText;
-          div.classList.remove("clicked");
-        } else {
-          seatStates[idx] = "X";
-          div.dataset.originalText = div.textContent;
-          div.textContent = "";
-          div.classList.add("clicked");
-        }
-      });
-
-      return div;
-    }
-
-    function generateSeats() {
-      const start = parseInt(document.getElementById("startNum").value);
-      const end = parseInt(document.getElementById("endNum").value);
-      const totalCells = parseInt(document.getElementById("totalCells").value);
-      const exclude = document.getElementById("excludeNums").value
-        .split(",")
-        .map(s => parseInt(s.trim()))
-        .filter(n => !isNaN(n));
-
-      if (start >= end || start < 1 || end < 1 || totalCells <= 0) {
-        alert("입력 값을 확인해주세요.");
-        return;
-      }
-
-      const seatLayout = document.getElementById("seatLayout");
-      const unplacedBox = document.getElementById("unplaced");
-      seatLayout.innerHTML = "";
-      unplacedBox.style.display = "none";
-      unplacedBox.innerHTML = "";
-
-      let validNumbers = [];
-      for (let i = start; i <= end; i++) {
-        if (!exclude.includes(i)) validNumbers.push(i);
-      }
-
-      const neededX = Math.max(0, totalCells - validNumbers.length);
-      for (let i = 0; i < neededX; i++) validNumbers.push("x");
-
-      shuffle(validNumbers);
-
-      seatStates = Array(totalCells).fill(null);
-      const columns = 2;
-      const sectionCount = 3;
-      const rows = Math.ceil(totalCells / (columns * sectionCount));
-
-      for (let s = 0; s < sectionCount; s++) {
-        const section = document.createElement("div");
-        section.className = "section";
-        section.style.gridTemplateColumns = `repeat(${columns}, 60px)`;
-        section.style.gridTemplateRows = `repeat(${rows}, 60px)`;
-
-        for (let i = 0; i < columns * rows; i++) {
-          const globalIndex = s * columns * rows + i;
-          if (globalIndex >= validNumbers.length) break;
-          const val = validNumbers[globalIndex];
-          section.appendChild(createCell(globalIndex, val === "x" ? "" : val));
+        // 유틸: 숫자 섞기
+        function shuffle(arr) {
+            for(let i=arr.length-1;i>0;i--){
+                let j = Math.floor(Math.random()*(i+1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
         }
 
-        seatLayout.appendChild(section);
-      }
+        // 좌석 생성 함수
+        function generateSeats() {
+            startNum = parseInt(document.getElementById('startNum').value, 10);
+            endNum = parseInt(document.getElementById('endNum').value, 10);
+            // 제외 번호 파싱
+            let excludeStr = document.getElementById('excludeNums').value.trim();
+            excludeNumbers = excludeStr ? excludeStr.split(',').map(x => parseInt(x.trim(), 10)).filter(x => !isNaN(x)) : [];
 
-      const used = sectionCount * columns * rows;
-      const unplaced = validNumbers.slice(used).filter(v => v !== "x");
-      if (unplaced.length > 0) {
-        unplacedBox.style.display = "block";
-        unplacedBox.textContent = "배치되지 못한 번호: " + unplaced.join(", ");
-      }
-    }
-  </script></body>
+            // 번호 목록 만들기
+            let numbers = [];
+            for(let i=startNum;i<=endNum;i++){
+                if(!excludeNumbers.includes(i)) numbers.push(i);
+            }
+            let totalStudentCount = numbers.length;
+
+            // 칸 개수 정하기
+            let seatPerDiv = 0, row = 0, col = 0;
+            let divSeats = [[],[],[]];
+
+            if ((endNum-startNum+1) <= 18) {
+                // 모든 분단 2x3 = 6칸, 3분단 = 18칸
+                row = 3; col = 2; seatPerDiv = row*col;
+                for(let i=0;i<3;i++){ divSeats[i] = Array(seatPerDiv).fill({type:'empty', value:null, xLocked:false}); }
+            } else {
+                // 분단당 최대 학생 수 비슷하게 분배
+                let totalSeats = endNum-startNum+1;
+                let baseSeat = Math.floor(totalSeats/3);
+                let extra = totalSeats%3;
+                let seatsInDiv = [baseSeat,baseSeat,baseSeat];
+                for(let i=0;i<extra;i++) seatsInDiv[i]++;
+                // 한 분단당 최대 6x6까지 제한
+                for(let i=0;i<3;i++){
+                    let seats = seatsInDiv[i];
+                    row = Math.ceil(Math.sqrt(seats));
+                    col = Math.ceil(seats/row);
+                    divSeats[i] = Array(row*col).fill({type:'empty', value:null, xLocked:false});
+                }
+            }
+            // 전체 칸수
+            let totalSeatsCount = divSeats.reduce((a,b)=>a+b.length,0);
+
+            // 좌석에 학생 번호와 X배치
+            let seatsFlat = [];
+            for(let i=0;i<3;i++){
+                for(let j=0;j<divSeats[i].length;j++){
+                    seatsFlat.push({division: i, index: j, type: 'empty', value: null, xLocked: false});
+                }
+            }
+            // 빈칸이 더 많으면 (빈칸 수 - 학생수)만큼 x를 랜덤하게 박는다
+            let needX = Math.max(0, seatsFlat.length - totalStudentCount);
+            let xPosArr = [];
+            if (needX>0) {
+                let idxs = Array.from(Array(seatsFlat.length).keys());
+                shuffle(idxs);
+                xPosArr = idxs.slice(0, needX);
+                for(let i=0;i<seatsFlat.length;i++){
+                    if(xPosArr.includes(i)){
+                        seatsFlat[i].type = 'x';
+                        seatsFlat[i].xLocked = false;
+                    }
+                }
+            }
+            // 남은 칸에 번호 배정
+            let numberArr = shuffle(numbers.slice());
+            let numIdx = 0;
+            for(let i=0;i<seatsFlat.length;i++){
+                if(seatsFlat[i].type==='empty' && numIdx < numberArr.length){
+                    seatsFlat[i].type = 'number';
+                    seatsFlat[i].value = numberArr[numIdx++];
+                }
+            }
+            // 다시 분단별 2차원으로 쪼개기
+            let pointer = 0;
+            seatState = [[],[],[]];
+            for(let i=0;i<3;i++){
+                for(let j=0;j<divSeats[i].length;j++){
+                    seatState[i][j] = seatsFlat[pointer++];
+                }
+            }
+            renderSeats();
+        }
+
+        // 좌석 렌더링 함수
+        function renderSeats() {
+            const seatingArea = document.getElementById('seatingArea');
+            seatingArea.innerHTML = '';
+            for(let d=0;d<3;d++){
+                let div = document.createElement('div');
+                div.className = 'division';
+                let title = document.createElement('div');
+                title.className = 'division-title';
+                title.textContent = `${d+1}분단`;
+                div.appendChild(title);
+
+                // 좌석 그리드 계산 (col/row)
+                let seatLen = seatState[d].length;
+                let row = 1, col = seatLen;
+                // 최소한 가로가 세로보다 작거나 같은 사각형
+                for(let c=1; c<=seatLen; c++) {
+                    let r = Math.ceil(seatLen/c);
+                    if(r>=c && r*c>=seatLen) { row = r; col = c; break; }
+                }
+                let grid = document.createElement('div');
+                grid.className = 'seats-grid';
+                grid.style.gridTemplateColumns = `repeat(${col}, 1fr)`;
+                grid.style.gridTemplateRows = `repeat(${row}, 1fr)`;
+                for(let i=0;i<seatLen;i++){
+                    let seat = seatState[d][i];
+                    let seatDiv = document.createElement('div');
+                    seatDiv.className = 'seat';
+                    if(seat.type==='number'){
+                        seatDiv.textContent = seat.value;
+                    } else if(seat.type==='x'){
+                        seatDiv.textContent = 'X';
+                        seatDiv.classList.add('x-seat');
+                    } else {
+                        seatDiv.classList.add('empty');
+                        seatDiv.textContent = '';
+                    }
+                    seatDiv.dataset.division = d;
+                    seatDiv.dataset.index = i;
+                    seatDiv.addEventListener('click', handleSeatClick);
+                    grid.appendChild(seatDiv);
+                }
+                div.appendChild(grid);
+                seatingArea.appendChild(div);
+            }
+        }
+
+        // 좌석 클릭 핸들러 (좌석에 X 표시, X 유지, X 좌석은 무효)
+        function handleSeatClick(e) {
+            let div = parseInt(this.dataset.division,10);
+            let idx = parseInt(this.dataset.index,10);
+            let seat = seatState[div][idx];
+
+            // 이미 X면 X 해제, 아니면 X로 변경(단, 숫자이면 X 못 함)
+            if(seat.type === 'number') return;
+            if(seat.type === 'x') {
+                seatState[div][idx].type = 'empty';
+                seatState[div][idx].xLocked = false;
+            } else if(seat.type === 'empty') {
+                seatState[div][idx].type = 'x';
+                seatState[div][idx].xLocked = true;
+            }
+            renderSeats();
+        }
+
+        // 자리 다시 뽑기시 X는 유지, X가 있는칸에 숫자 안배정
+        function replaySeats() {
+            // xLocked = true인 칸은 X로 유지
+            let numbers = [];
+            for(let i=startNum;i<=endNum;i++){
+                if(!excludeNumbers.includes(i)) numbers.push(i);
+            }
+            let numberArr = shuffle(numbers.slice());
+            // X 칸 제외한 칸만 수집
+            let availableSeats = [];
+            for(let d=0;d<3;d++){
+                for(let i=0;i<seatState[d].length;i++){
+                    let seat = seatState[d][i];
+                    if(seat.type==='x' && seat.xLocked) continue;
+                    if(seat.type==='number' || seat.type==='empty' || (seat.type==='x' && !seat.xLocked)) {
+                        availableSeats.push({d, i});
+                    }
+                }
+            }
+            let numIdx = 0;
+            for(let d=0;d<3;d++){
+                for(let i=0;i<seatState[d].length;i++){
+                    let seat = seatState[d][i];
+                    if(seat.type==='x' && seat.xLocked) continue;
+                    if(numIdx < numberArr.length){
+                        seatState[d][i].type = 'number';
+                        seatState[d][i].value = numberArr[numIdx++];
+                        seatState[d][i].xLocked = false;
+                    } else {
+                        seatState[d][i].type = 'empty';
+                        seatState[d][i].value = null;
+                        seatState[d][i].xLocked = false;
+                    }
+                }
+            }
+            // xLocked 칸은 x로 표시
+            for(let d=0;d<3;d++){
+                for(let i=0;i<seatState[d].length;i++){
+                    if(seatState[d][i].xLocked){
+                        seatState[d][i].type = 'x';
+                        seatState[d][i].value = null;
+                    }
+                }
+            }
+            renderSeats();
+        }
+
+        document.getElementById('generateBtn').addEventListener('click',function(){
+            generateSeats();
+            // 자리뽑기 버튼이 자리 다시뽑기로 변경
+            this.textContent = "자리 다시 뽑기";
+            this.onclick = replaySeats;
+        });
+
+        // 최초 1회 자동 렌더
+        window.onload = generateSeats;
+    </script>
+</body>
 </html>
